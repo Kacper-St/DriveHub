@@ -1,8 +1,13 @@
 package io.github.kacperst.drivehub.modules.user.service;
 
+import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
 import io.github.kacperst.drivehub.modules.user.dto.RegisterRequest;
-import io.github.kacperst.drivehub.modules.user.model.AuthProvider;
+import io.github.kacperst.drivehub.modules.user.exception.InvalidCredentialsException;
+import io.github.kacperst.drivehub.modules.user.exception.InternalTechnicalException;
+import io.github.kacperst.drivehub.modules.user.exception.UserAlreadyExistsException;
+import io.github.kacperst.drivehub.modules.user.mapper.UserMapper;
 import io.github.kacperst.drivehub.modules.user.model.Role;
+import io.github.kacperst.drivehub.modules.user.model.RoleName;
 import io.github.kacperst.drivehub.modules.user.model.User;
 import io.github.kacperst.drivehub.modules.user.repository.RoleRepository;
 import io.github.kacperst.drivehub.modules.user.repository.UserRepository;
@@ -22,6 +27,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional
@@ -30,25 +36,40 @@ public class UserServiceImpl implements UserService {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             log.warn("Registration failed: Email {} already exists", request.getEmail());
-            throw new RuntimeException("User with this email already exists");
+            throw new UserAlreadyExistsException("User with this email already exists");
         }
 
-        Role studentRole = roleRepository.findByName("ROLE_STUDENT")
+        Role studentRole = roleRepository.findByName(RoleName.ROLE_STUDENT)
                 .orElseThrow(() -> {
                     log.error("Critical error: ROLE_STUDENT not found in database!");
-                    return new RuntimeException("Default role not found");
+                    return new InternalTechnicalException("Role not found");
                 });
 
-        User user = new User();
-        user.setEmail(request.getEmail());
+        User user = userMapper.toEntity(request);
+
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setAuthProvider(AuthProvider.LOCAL);
         user.setRoles(Collections.singleton(studentRole));
-        user.setActive(true);
 
         userRepository.save(user);
         log.info("User {} successfully registered", user.getEmail());
+    }
+
+    @Override
+    public void loginUser(LoginRequest request) {
+        log.info("Attempting to authenticate user: {}", request.getEmail());
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> {
+                    log.warn("Authentication failed: User with email {} not found", request.getEmail());
+                    return new InvalidCredentialsException();
+                });
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
+            log.warn("Authentication failed: Wrong password for user {}", request.getEmail());
+            throw new InvalidCredentialsException();
+        }
+
+        log.info("User {} successfully logged in", user.getEmail());
+
     }
 }

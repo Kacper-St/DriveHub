@@ -31,7 +31,7 @@ public class User {
     private String lastName;
 
     @Enumerated(EnumType.STRING)
-    private AuthProvider authProvider;
+    private AuthProvider authProvider = AuthProvider.LOCAL;
 
     private boolean isActive = true;
 

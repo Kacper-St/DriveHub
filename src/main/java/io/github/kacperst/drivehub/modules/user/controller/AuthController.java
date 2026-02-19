@@ -1,5 +1,6 @@
 package io.github.kacperst.drivehub.modules.user.controller;
 
+import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
 import io.github.kacperst.drivehub.modules.user.dto.RegisterRequest;
 import io.github.kacperst.drivehub.modules.user.service.UserService;
 import jakarta.validation.Valid;
@@ -22,5 +23,11 @@ public class AuthController {
     public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest request) {
         userService.registerUser(request);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        userService.loginUser(request);
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }
