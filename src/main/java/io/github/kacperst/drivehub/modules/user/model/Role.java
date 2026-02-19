@@ -16,10 +16,11 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Enumerated(EnumType.STRING)
     @Column(unique = true, nullable = false)
-    private String name;
+    private RoleName name;
 
-    public Role(String name) {
+    public Role(RoleName name) {
         this.name = name;
     }
 }
