@@ -5,7 +5,7 @@ CREATE TABLE vehicles (
                           color VARCHAR(255) NOT NULL,
                           vin VARCHAR(17) NOT NULL,
                           registration_number VARCHAR(15) NOT NULL,
-                          category VARCHAR(20) NOT NULL,
+                          license_category VARCHAR(20) NOT NULL,
                           status VARCHAR(30) NOT NULL,
                           mileage BIGINT NOT NULL,
                           insurance_start_date DATE NOT NULL,
@@ -23,7 +23,7 @@ ALTER TABLE vehicles ADD CONSTRAINT uk_vehicles_registration_number UNIQUE (regi
 ALTER TABLE vehicles ADD CONSTRAINT chk_vehicles_status
     CHECK (status IN ('AVAILABLE', 'IN_REPAIR', 'INSPECTION_REQUIRED', 'OUT_OF_SERVICE'));
 
-ALTER TABLE vehicles ADD CONSTRAINT chk_vehicles_category
-    CHECK (category IN ('AM', 'A1', 'A2', 'A', 'B1', 'B', 'BE', 'C1', 'C', 'C1E', 'CE', 'D1', 'D', 'D1E', 'DE'));
+ALTER TABLE vehicles ADD CONSTRAINT chk_vehicles_license_category
+    CHECK (license_category IN ('AM', 'A1', 'A2', 'A', 'B1', 'B', 'BE', 'C1', 'C', 'C1E', 'CE', 'D1', 'D', 'D1E', 'DE'));
 
-CREATE INDEX idx_vehicles_status_category ON vehicles(status, category);
+CREATE INDEX idx_vehicles_status_license_category ON vehicles(status, license_category);

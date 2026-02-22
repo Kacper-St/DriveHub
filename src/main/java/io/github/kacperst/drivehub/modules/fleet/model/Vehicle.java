@@ -46,7 +46,7 @@ public class Vehicle {
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Category category;
+    private LicenseCategory licenseCategory;
 
     @NotNull
     @Enumerated(EnumType.STRING)

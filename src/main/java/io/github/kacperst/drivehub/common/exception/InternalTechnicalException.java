@@ -1,6 +1,5 @@
-package io.github.kacperst.drivehub.modules.user.exception;
+package io.github.kacperst.drivehub.common.exception;
 
-import io.github.kacperst.drivehub.common.exception.BaseBusinessException;
 import org.springframework.http.HttpStatus;
 
 public class InternalTechnicalException extends BaseBusinessException {

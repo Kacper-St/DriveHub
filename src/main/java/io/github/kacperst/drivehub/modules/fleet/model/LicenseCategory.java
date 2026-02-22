@@ -1,6 +1,6 @@
 package io.github.kacperst.drivehub.modules.fleet.model;
 
-public enum Category {
+public enum LicenseCategory {
     AM,
 
     A1,
