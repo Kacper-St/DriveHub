@@ -3,7 +3,7 @@ package io.github.kacperst.drivehub.modules.user.service;
 import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
 import io.github.kacperst.drivehub.modules.user.dto.RegisterRequest;
 import io.github.kacperst.drivehub.modules.user.exception.InvalidCredentialsException;
-import io.github.kacperst.drivehub.modules.user.exception.InternalTechnicalException;
+import io.github.kacperst.drivehub.common.exception.InternalTechnicalException;
 import io.github.kacperst.drivehub.modules.user.exception.UserAlreadyExistsException;
 import io.github.kacperst.drivehub.modules.user.mapper.UserMapper;
 import io.github.kacperst.drivehub.modules.user.model.Role;
