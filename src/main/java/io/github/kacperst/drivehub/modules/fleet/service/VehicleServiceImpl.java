@@ -70,6 +70,29 @@ public class VehicleServiceImpl implements  VehicleService {
         vehicleRepository.delete(vehicle);
     }
 
+    @Override
+    @Transactional
+    public VehicleResponse updateVehicleById(UUID id, VehicleRequest vehicleRequest) {
+        log.info("Updating vehicle with ID: {}", id);
+
+        Vehicle vehicle = findVehicleOrThrow(id);
+
+        if (!vehicle.getVin().equals(vehicleRequest.getVin())) {
+            if (vehicleRepository.existsByVinAndIdNot(vehicleRequest.getVin(), id)) {
+                log.warn("Cannot update vehicle. VIN {} already exists in another record", vehicleRequest.getVin());
+                throw new VehicleAlreadyExistsException(vehicleRequest.getVin());
+            }
+        }
+
+        vehicleMapper.updateVehicle(vehicleRequest, vehicle);
+
+        Vehicle updatedVehicle = vehicleRepository.save(vehicle);
+
+        log.info("Vehicle successfully updated with ID: {}", updatedVehicle.getId());
+
+        return vehicleMapper.toResponse(updatedVehicle);
+    }
+
     private Vehicle findVehicleOrThrow(UUID id){
         return vehicleRepository.findById(id)
                 .orElseThrow(() -> {

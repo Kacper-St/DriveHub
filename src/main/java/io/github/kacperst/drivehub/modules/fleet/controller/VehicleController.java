@@ -55,4 +55,11 @@ public class VehicleController {
         vehicleService.deleteVehicleById(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<VehicleResponse> updateVehicle(@PathVariable UUID id,
+                                                         @Valid @RequestBody VehicleRequest vehicleRequest) {
+        log.info("REST request to update Vehicle : {}", id);
+        return ResponseEntity.ok(vehicleService.updateVehicleById(id, vehicleRequest));
+    }
 }
