@@ -41,4 +41,10 @@ public class VehicleController {
 
         return ResponseEntity.created(location).build();
     }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<VehicleResponse> getVehicle(@PathVariable UUID id) {
+        log.info("REST request to get Vehicle : {}", id);
+        return ResponseEntity.ok(vehicleService.getVehicleById(id));
+    }
 }

@@ -3,6 +3,7 @@ package io.github.kacperst.drivehub.modules.fleet.service;
 import io.github.kacperst.drivehub.modules.fleet.dto.VehicleRequest;
 import io.github.kacperst.drivehub.modules.fleet.dto.VehicleResponse;
 import io.github.kacperst.drivehub.modules.fleet.exception.VehicleAlreadyExistsException;
+import io.github.kacperst.drivehub.modules.fleet.exception.VehicleNotFoundException;
 import io.github.kacperst.drivehub.modules.fleet.mapper.VehicleMapper;
 import io.github.kacperst.drivehub.modules.fleet.model.Vehicle;
 import io.github.kacperst.drivehub.modules.fleet.repository.VehicleRepository;
@@ -48,5 +49,18 @@ public class VehicleServiceImpl implements  VehicleService {
         log.info("Vehicle successfully saved with ID: {}", savedVehicle.getId());
 
         return savedVehicle.getId();
+    }
+
+    @Override
+    public VehicleResponse getVehicleById(UUID id) {
+        log.info("Retrieving vehicle with ID: {}", id);
+
+        Vehicle vehicle = vehicleRepository.findById(id)
+                .orElseThrow(() -> {
+                        log.warn("Vehicle with ID {} not found", id);
+                        return new VehicleNotFoundException("Vehicle not found with ID: " + id);
+                });
+
+        return vehicleMapper.toResponse(vehicle);
     }
 }
