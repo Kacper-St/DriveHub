@@ -10,4 +10,8 @@ public interface VehicleService {
     List<VehicleResponse> getAllVehicles();
 
     UUID addVehicle(VehicleRequest vehicleRequest);
+
+    VehicleResponse getVehicleById(UUID id);
+
+    void deleteVehicleById(UUID id);
 }
