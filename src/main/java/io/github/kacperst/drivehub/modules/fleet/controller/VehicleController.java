@@ -24,6 +24,7 @@ public class VehicleController {
 
     @GetMapping
     public ResponseEntity<List<VehicleResponse>> getVehicles() {
+        log.info("REST request to get AllVehicle");
         return ResponseEntity.ok(vehicleService.getAllVehicles());
     }
 
@@ -46,5 +47,12 @@ public class VehicleController {
     public ResponseEntity<VehicleResponse> getVehicle(@PathVariable UUID id) {
         log.info("REST request to get Vehicle : {}", id);
         return ResponseEntity.ok(vehicleService.getVehicleById(id));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteVehicle(@PathVariable UUID id) {
+        log.info("REST request to delete Vehicle : {}", id);
+        vehicleService.deleteVehicleById(id);
+        return ResponseEntity.noContent().build();
     }
 }

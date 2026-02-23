@@ -55,12 +55,26 @@ public class VehicleServiceImpl implements  VehicleService {
     public VehicleResponse getVehicleById(UUID id) {
         log.info("Retrieving vehicle with ID: {}", id);
 
-        Vehicle vehicle = vehicleRepository.findById(id)
-                .orElseThrow(() -> {
-                        log.warn("Vehicle with ID {} not found", id);
-                        return new VehicleNotFoundException("Vehicle not found with ID: " + id);
-                });
+        Vehicle vehicle = findVehicleOrThrow(id);
 
         return vehicleMapper.toResponse(vehicle);
+    }
+
+    @Override
+    @Transactional
+    public void deleteVehicleById(UUID id) {
+        log.info("Deleting vehicle with ID: {}", id);
+
+        Vehicle vehicle = findVehicleOrThrow(id);
+
+        vehicleRepository.delete(vehicle);
+    }
+
+    private Vehicle findVehicleOrThrow(UUID id){
+        return vehicleRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Vehicle with ID {} not found", id);
+                    return new VehicleNotFoundException("Vehicle not found with ID: " + id);
+                });
     }
 }

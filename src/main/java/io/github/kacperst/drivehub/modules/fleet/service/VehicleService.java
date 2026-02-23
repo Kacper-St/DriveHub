@@ -12,4 +12,6 @@ public interface VehicleService {
     UUID addVehicle(VehicleRequest vehicleRequest);
 
     VehicleResponse getVehicleById(UUID id);
+
+    void deleteVehicleById(UUID id);
 }
