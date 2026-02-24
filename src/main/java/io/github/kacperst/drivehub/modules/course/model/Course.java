@@ -42,10 +42,10 @@ public class Course {
 
     @NotNull
     @Min(1)
-    private Integer totalHours;
+    private Integer totalMinutes;
 
     @NotNull
-    private Integer remainingHours;
+    private Integer remainingMinutes;
 
     @CreationTimestamp
     @Column(updatable = false, nullable = false)
