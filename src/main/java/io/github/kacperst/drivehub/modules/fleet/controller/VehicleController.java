@@ -32,7 +32,7 @@ public class VehicleController {
     public ResponseEntity<Void> createVehicle(@Valid @RequestBody VehicleRequest vehicleRequest) {
         log.info("REST request to save Vehicle : {}", vehicleRequest.getVin());
 
-        UUID newVehicleId = vehicleService.addVehicle(vehicleRequest);
+        UUID newVehicleId = vehicleService.createVehicle(vehicleRequest);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()

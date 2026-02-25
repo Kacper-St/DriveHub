@@ -49,4 +49,12 @@ public class User {
 
     @UpdateTimestamp
     private Instant updatedAt;
+
+    public boolean hasRole(RoleName roleName) {
+        if (roles == null || roleName == null) {
+            return false;
+        }
+        return roles.stream()
+                .anyMatch(role -> role.getName() == roleName);
+    }
 }
