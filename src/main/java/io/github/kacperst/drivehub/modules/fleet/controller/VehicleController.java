@@ -29,18 +29,18 @@ public class VehicleController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createVehicle(@Valid @RequestBody VehicleRequest vehicleRequest) {
+    public ResponseEntity<VehicleResponse> createVehicle(@Valid @RequestBody VehicleRequest vehicleRequest) {
         log.info("REST request to save Vehicle : {}", vehicleRequest.getVin());
 
-        UUID newVehicleId = vehicleService.createVehicle(vehicleRequest);
+        VehicleResponse createVehicle = vehicleService.createVehicle(vehicleRequest);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
-                .buildAndExpand(newVehicleId)
+                .buildAndExpand(createVehicle.getId())
                 .toUri();
 
-        return ResponseEntity.created(location).build();
+        return ResponseEntity.created(location).body(createVehicle);
     }
 
     @GetMapping("/{id}")

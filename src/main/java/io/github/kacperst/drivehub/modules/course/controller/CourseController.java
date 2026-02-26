@@ -12,6 +12,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/courses")
@@ -23,7 +24,7 @@ public class CourseController {
 
     @GetMapping
     public ResponseEntity<List<CourseResponse>> getAllCourses(){
-        log.info("Attempting to fetch all courses");
+        log.debug("Attempting to fetch all courses");
         return ResponseEntity.ok(courseService.getAllCourses());
     }
 
@@ -40,5 +41,11 @@ public class CourseController {
                 .toUri();
 
         return ResponseEntity.created(location).body(createdCourse);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CourseResponse> getCourseById(@PathVariable UUID id){
+        log.debug("Attempting to fetch course for course ID: {}", id);
+        return ResponseEntity.ok(courseService.getCourseById(id));
     }
 }

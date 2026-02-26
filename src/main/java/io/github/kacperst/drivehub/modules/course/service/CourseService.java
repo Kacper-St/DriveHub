@@ -10,4 +10,6 @@ public interface CourseService {
     List<CourseResponse> getAllCourses();
 
     CourseResponse createCourse(CourseRequest courseRequest);
+
+    CourseResponse getCourseById(UUID id);
 }

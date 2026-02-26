@@ -9,7 +9,7 @@ import java.util.UUID;
 public interface VehicleService {
     List<VehicleResponse> getAllVehicles();
 
-    UUID createVehicle(VehicleRequest vehicleRequest);
+    VehicleResponse createVehicle(VehicleRequest vehicleRequest);
 
     VehicleResponse getVehicleById(UUID id);
 
