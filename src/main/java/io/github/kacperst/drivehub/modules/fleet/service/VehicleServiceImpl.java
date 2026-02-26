@@ -34,7 +34,7 @@ public class VehicleServiceImpl implements  VehicleService {
 
     @Override
     @Transactional
-    public UUID createVehicle(VehicleRequest vehicleRequest) {
+    public VehicleResponse createVehicle(VehicleRequest vehicleRequest) {
         log.info("Adding vehicle with VIN: {}", vehicleRequest.getVin());
 
         if (vehicleRepository.existsByVin(vehicleRequest.getVin())){
@@ -48,7 +48,7 @@ public class VehicleServiceImpl implements  VehicleService {
 
         log.info("Vehicle successfully saved with ID: {}", savedVehicle.getId());
 
-        return savedVehicle.getId();
+        return vehicleMapper.toResponse(savedVehicle);
     }
 
     @Override
