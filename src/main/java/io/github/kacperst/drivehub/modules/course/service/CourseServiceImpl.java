@@ -2,6 +2,7 @@ package io.github.kacperst.drivehub.modules.course.service;
 
 import io.github.kacperst.drivehub.modules.course.dto.CourseRequest;
 import io.github.kacperst.drivehub.modules.course.dto.CourseResponse;
+import io.github.kacperst.drivehub.modules.course.exception.CourseNotFoundException;
 import io.github.kacperst.drivehub.modules.course.exception.InvalidUserRoleException;
 import io.github.kacperst.drivehub.modules.course.exception.UserNotFoundException;
 import io.github.kacperst.drivehub.modules.course.mapper.CourseMapper;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -39,7 +41,7 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional
     public CourseResponse createCourse(CourseRequest courseRequest) {
-        log.debug("Creating course for student ID: {}", courseRequest.getStudentId());
+        log.info("Creating course for student ID: {}", courseRequest.getStudentId());
 
         User student = userRepository.findById(courseRequest.getStudentId())
                 .orElseThrow(() ->
@@ -69,5 +71,16 @@ public class CourseServiceImpl implements CourseService {
         Course savedCourse = courseRepository.save(course);
 
         return courseMapper.toResponse(savedCourse);
+    }
+
+    @Override
+    public CourseResponse getCourseById(UUID id) {
+        log.debug("Fetching course ID: {}", id);
+
+        Course course = courseRepository.findById(id)
+                .orElseThrow(() ->
+                        new CourseNotFoundException("Course with ID: " + id + " not found"));
+
+        return courseMapper.toResponse(course);
     }
 }
