@@ -77,10 +77,28 @@ public class CourseServiceImpl implements CourseService {
     public CourseResponse getCourseById(UUID id) {
         log.debug("Fetching course ID: {}", id);
 
-        Course course = courseRepository.findById(id)
-                .orElseThrow(() ->
-                        new CourseNotFoundException("Course with ID: " + id + " not found"));
+        Course course = findCourseOrThrow(id);
 
         return courseMapper.toResponse(course);
+    }
+
+    @Override
+    public void deleteCourseById(UUID id) {
+        log.debug("Deleting course ID: {}", id);
+
+        Course course = findCourseOrThrow(id);
+
+        courseRepository.delete(course);
+
+        log.info("Course with ID: {} successfully deleted", id);
+    }
+
+
+
+    private Course findCourseOrThrow(UUID id){
+        return courseRepository.findById(id)
+                .orElseThrow(() ->
+                    new CourseNotFoundException("Course with ID: " + id + " not found")
+                );
     }
 }
