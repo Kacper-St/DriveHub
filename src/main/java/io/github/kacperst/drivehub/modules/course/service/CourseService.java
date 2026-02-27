@@ -12,4 +12,6 @@ public interface CourseService {
     CourseResponse createCourse(CourseRequest courseRequest);
 
     CourseResponse getCourseById(UUID id);
+
+    void deleteCourseById(UUID id);
 }

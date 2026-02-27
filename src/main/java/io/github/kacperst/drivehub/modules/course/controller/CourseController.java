@@ -48,4 +48,11 @@ public class CourseController {
         log.debug("Attempting to fetch course for course ID: {}", id);
         return ResponseEntity.ok(courseService.getCourseById(id));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCourseById(@PathVariable UUID id){
+        log.debug("Attempting to delete course ID: {}", id);
+        courseService.deleteCourseById(id);
+        return ResponseEntity.noContent().build();
+    }
 }
