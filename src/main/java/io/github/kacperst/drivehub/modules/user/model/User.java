@@ -25,6 +25,12 @@ public class User {
     @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(unique = true, nullable = false, length = 11)
+    private String pesel;
+
+    @Column(nullable = false)
+    private boolean forcePasswordChange = true;
+
     private String password;
 
     private String firstName;

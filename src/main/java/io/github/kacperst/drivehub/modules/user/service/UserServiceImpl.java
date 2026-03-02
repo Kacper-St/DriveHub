@@ -1,23 +1,28 @@
 package io.github.kacperst.drivehub.modules.user.service;
 
-import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
-import io.github.kacperst.drivehub.modules.user.dto.RegisterRequest;
-import io.github.kacperst.drivehub.modules.user.exception.InvalidCredentialsException;
+import io.github.kacperst.drivehub.common.exception.BaseBusinessException;
 import io.github.kacperst.drivehub.common.exception.InternalTechnicalException;
+import io.github.kacperst.drivehub.common.util.PasswordGenerator;
+import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
+import io.github.kacperst.drivehub.modules.user.dto.PasswordChangeRequest;
+import io.github.kacperst.drivehub.modules.user.dto.UserRequest;
+import io.github.kacperst.drivehub.modules.user.dto.UserResponse;
+import io.github.kacperst.drivehub.modules.user.exception.InvalidCredentialsException;
+import io.github.kacperst.drivehub.modules.user.exception.SamePasswordException;
 import io.github.kacperst.drivehub.modules.user.exception.UserAlreadyExistsException;
 import io.github.kacperst.drivehub.modules.user.mapper.UserMapper;
 import io.github.kacperst.drivehub.modules.user.model.Role;
-import io.github.kacperst.drivehub.modules.user.model.RoleName;
 import io.github.kacperst.drivehub.modules.user.model.User;
 import io.github.kacperst.drivehub.modules.user.repository.RoleRepository;
 import io.github.kacperst.drivehub.modules.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,48 +33,88 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+    private final PasswordGenerator passwordGenerator;
 
     @Override
-    @Transactional
-    public void registerUser(RegisterRequest request) {
-        log.info("Attempting to register new user with email: {}", request.getEmail());
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            log.warn("Registration failed: Email {} already exists", request.getEmail());
-            throw new UserAlreadyExistsException("User with this email already exists");
-        }
-
-        Role studentRole = roleRepository.findByName(RoleName.ROLE_STUDENT)
-                .orElseThrow(() -> {
-                    log.error("Critical error: ROLE_STUDENT not found in database!");
-                    return new InternalTechnicalException("Role not found");
-                });
-
-        User user = userMapper.toEntity(request);
-
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRoles(Collections.singleton(studentRole));
-
-        userRepository.save(user);
-        log.info("User {} successfully registered", user.getEmail());
-    }
-
-    @Override
+    @Transactional(readOnly = true)
     public void loginUser(LoginRequest request) {
-        log.info("Attempting to authenticate user: {}", request.getEmail());
+        log.info("Attempting authentication for identifier: {}", request.getLoginIdentifier());
 
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmailOrPesel(request.getLoginIdentifier(), request.getLoginIdentifier())
                 .orElseThrow(() -> {
-                    log.warn("Authentication failed: User with email {} not found", request.getEmail());
+                    log.warn("Authentication failed: User with identifier {} not found", request.getLoginIdentifier());
                     return new InvalidCredentialsException();
                 });
 
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())){
-            log.warn("Authentication failed: Wrong password for user {}", request.getEmail());
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            log.warn("Authentication failed: Invalid password for identifier {}", request.getLoginIdentifier());
             throw new InvalidCredentialsException();
         }
 
-        log.info("User {} successfully logged in", user.getEmail());
+        if (user.isForcePasswordChange()) {
+            log.info("Authentication successful for user {}. Redirection to password change required.", user.getPesel());
+        } else {
+            log.info("User {} successfully authenticated.", user.getPesel());
+        }
+    }
 
+    @Override
+    @Transactional
+    public UserResponse createUser(UserRequest userRequest) {
+        log.info("Creating new user with email: {} and PESEL: {}", userRequest.getEmail(), userRequest.getPesel());
+
+        if (userRepository.existsByEmail(userRequest.getEmail())) {
+            throw new UserAlreadyExistsException("Email already taken");
+        }
+        if (userRepository.existsByPesel(userRequest.getPesel())) {
+            throw new UserAlreadyExistsException("User with this PESEL already exists");
+        }
+
+        User user = userMapper.toEntity(userRequest);
+
+        String rawPassword = passwordGenerator.generate(8);
+        user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setForcePasswordChange(true);
+        user.setActive(true);
+
+        Set<Role> roles = userRequest.getRoles().stream()
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new InternalTechnicalException
+                                ("Critical error: Role " + roleName + " not found")))
+                .collect(Collectors.toSet());
+        user.setRoles(roles);
+
+        User savedUser = userRepository.saveAndFlush(user);
+        log.info("User created successfully. TEMP PASSWORD for {}: {}", user.getPesel(), rawPassword);
+
+        return userMapper.toResponse(savedUser);
+    }
+
+    @Override
+    @Transactional
+    public void changePassword(PasswordChangeRequest request) {
+        log.info("Attempting to change password for user: {}", request.getLoginIdentifier());
+
+        User user = userRepository.findByEmailOrPesel(request.getLoginIdentifier(), request.getLoginIdentifier())
+                .orElseThrow(() -> {
+                    log.warn("Password change failed: User {} not found", request.getLoginIdentifier());
+                    return new InvalidCredentialsException();
+                });
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            log.warn("Password change failed: Current password does not match for user {}", request.getLoginIdentifier());
+            throw new InvalidCredentialsException();
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            log.warn("Password change failed: New password is the same as the old one for user {}", request.getLoginIdentifier());
+            throw new SamePasswordException();
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setForcePasswordChange(false);
+
+        userRepository.save(user);
+        log.info("Password successfully changed for user: {}. ForcePasswordChange flag reset to false.", user.getPesel());
     }
 }
