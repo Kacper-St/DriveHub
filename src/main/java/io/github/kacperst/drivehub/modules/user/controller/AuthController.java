@@ -21,7 +21,7 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
         userService.loginUser(request);
-        return ResponseEntity.ok("Zalogowano pomyślnie");
+        return ResponseEntity.ok("Login successful");
     }
 
     @PostMapping("/change-password")

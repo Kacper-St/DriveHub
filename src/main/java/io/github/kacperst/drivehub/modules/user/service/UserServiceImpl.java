@@ -1,6 +1,5 @@
 package io.github.kacperst.drivehub.modules.user.service;
 
-import io.github.kacperst.drivehub.common.exception.BaseBusinessException;
 import io.github.kacperst.drivehub.common.exception.InternalTechnicalException;
 import io.github.kacperst.drivehub.common.util.PasswordGenerator;
 import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;

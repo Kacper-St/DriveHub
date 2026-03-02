@@ -3,6 +3,7 @@ package io.github.kacperst.drivehub.modules.user.controller;
 import io.github.kacperst.drivehub.modules.user.dto.UserRequest;
 import io.github.kacperst.drivehub.modules.user.dto.UserResponse;
 import io.github.kacperst.drivehub.modules.user.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<UserResponse> createUser(@RequestBody UserRequest userRequest){
+    public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest userRequest){
         log.debug("Creating user");
 
         UserResponse userResponse = userService.createUser(userRequest);
