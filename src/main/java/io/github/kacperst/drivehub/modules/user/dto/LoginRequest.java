@@ -1,6 +1,5 @@
 package io.github.kacperst.drivehub.modules.user.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,9 +7,8 @@ import lombok.Setter;
 @Getter @Setter
 public class LoginRequest {
 
-    @Email(message = "Email must be valid")
-    @NotBlank(message = "Email can not be blank")
-    private String email;
+    @NotBlank(message = "Login can not be blank")
+    private String loginIdentifier;
 
     @NotBlank(message = "Password can not be blank")
     private String password;

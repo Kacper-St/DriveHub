@@ -1,11 +1,10 @@
 package io.github.kacperst.drivehub.modules.user.controller;
 
 import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
-import io.github.kacperst.drivehub.modules.user.dto.RegisterRequest;
+import io.github.kacperst.drivehub.modules.user.dto.PasswordChangeRequest;
 import io.github.kacperst.drivehub.modules.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,15 +18,15 @@ public class AuthController {
 
     private final UserService userService;
 
-    @PostMapping("/register")
-    public ResponseEntity<Void> register(@Valid @RequestBody RegisterRequest request) {
-        userService.registerUser(request);
-        return new ResponseEntity<>(HttpStatus.CREATED);
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest request) {
+        userService.loginUser(request);
+        return ResponseEntity.ok("Zalogowano pomyślnie");
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        userService.loginUser(request);
-        return new ResponseEntity<>(HttpStatus.OK);
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(@Valid @RequestBody PasswordChangeRequest request) {
+        userService.changePassword(request);
+        return ResponseEntity.ok("Password changed successfully. You can now log in with your new credentials.");
     }
 }
