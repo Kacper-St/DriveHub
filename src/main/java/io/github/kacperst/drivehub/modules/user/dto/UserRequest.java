@@ -1,6 +1,7 @@
 package io.github.kacperst.drivehub.modules.user.dto;
 
 import io.github.kacperst.drivehub.modules.user.model.RoleName;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,9 +9,23 @@ import java.util.Set;
 
 @Getter @Setter
 public class UserRequest {
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
     private String email;
+
+    @NotBlank(message = "First name is required")
+    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     private String firstName;
+
+    @NotBlank(message = "Last name is required")
+    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String lastName;
+
+    @NotBlank(message = "PESEL is required")
+    @Pattern(regexp = "\\d{11}", message = "PESEL must consist of exactly 11 digits")
     private String pesel;
+
+    @NotEmpty(message = "At least one role must be assigned")
     private Set<RoleName> roles;
 }

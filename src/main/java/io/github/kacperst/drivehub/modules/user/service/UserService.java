@@ -6,6 +6,9 @@ import io.github.kacperst.drivehub.modules.user.dto.UserRequest;
 import io.github.kacperst.drivehub.modules.user.dto.UserResponse;
 import jakarta.validation.Valid;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface UserService {
 
     void loginUser(LoginRequest request);
@@ -13,4 +16,10 @@ public interface UserService {
     UserResponse createUser(UserRequest userRequest);
 
     void changePassword(@Valid PasswordChangeRequest request);
+
+    void deleteUserById(UUID id);
+
+    UserResponse getUserById(UUID id);
+
+    List<UserResponse> getAllUsers();
 }

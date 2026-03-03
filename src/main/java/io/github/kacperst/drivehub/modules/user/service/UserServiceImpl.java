@@ -1,6 +1,5 @@
 package io.github.kacperst.drivehub.modules.user.service;
 
-import io.github.kacperst.drivehub.common.exception.BaseBusinessException;
 import io.github.kacperst.drivehub.common.exception.InternalTechnicalException;
 import io.github.kacperst.drivehub.common.util.PasswordGenerator;
 import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
@@ -10,6 +9,7 @@ import io.github.kacperst.drivehub.modules.user.dto.UserResponse;
 import io.github.kacperst.drivehub.modules.user.exception.InvalidCredentialsException;
 import io.github.kacperst.drivehub.modules.user.exception.SamePasswordException;
 import io.github.kacperst.drivehub.modules.user.exception.UserAlreadyExistsException;
+import io.github.kacperst.drivehub.modules.user.exception.UserNotFoundException;
 import io.github.kacperst.drivehub.modules.user.mapper.UserMapper;
 import io.github.kacperst.drivehub.modules.user.model.Role;
 import io.github.kacperst.drivehub.modules.user.model.User;
@@ -21,7 +21,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -45,6 +47,11 @@ public class UserServiceImpl implements UserService {
                     log.warn("Authentication failed: User with identifier {} not found", request.getLoginIdentifier());
                     return new InvalidCredentialsException();
                 });
+
+        if (!user.isActive()) {
+            log.warn("Authentication failed for identifier {}", request.getLoginIdentifier());
+            throw new InvalidCredentialsException();
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             log.warn("Authentication failed: Invalid password for identifier {}", request.getLoginIdentifier());
@@ -116,5 +123,45 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
         log.info("Password successfully changed for user: {}. ForcePasswordChange flag reset to false.", user.getPesel());
+    }
+
+    @Override
+    @Transactional
+    public void deleteUserById(UUID id) {
+        log.info("Deactivating user with ID: {}", id);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("Deactivation failed: User {} not found", id);
+                    return new UserNotFoundException("User not found");
+                });
+
+        user.setActive(false);
+        userRepository.save(user);
+
+        log.info("User {} has been successfully deactivated", id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserById(UUID id) {
+        log.info("Getting user with ID: {}", id);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("User with ID {} not found", id);
+                    return new UserNotFoundException("User not found");
+                });
+
+        return userMapper.toResponse(user);
+    }
+
+    @Override
+    public List<UserResponse> getAllUsers() {
+        log.info("Getting all users");
+
+        List<User> users = userRepository.findAllWithRoles();
+
+        return userMapper.toResponse(users);
     }
 }
