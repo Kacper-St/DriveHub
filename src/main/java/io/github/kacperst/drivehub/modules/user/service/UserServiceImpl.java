@@ -42,11 +42,7 @@ public class UserServiceImpl implements UserService {
     public void loginUser(LoginRequest request) {
         log.info("Attempting authentication for identifier: {}", request.getLoginIdentifier());
 
-        User user = userRepository.findByEmailOrPesel(request.getLoginIdentifier(), request.getLoginIdentifier())
-                .orElseThrow(() -> {
-                    log.warn("Authentication failed: User with identifier {} not found", request.getLoginIdentifier());
-                    return new InvalidCredentialsException();
-                });
+        User user = findByIdentifierOrThrow(request.getLoginIdentifier());
 
         if (!user.isActive()) {
             log.warn("Authentication failed for identifier {}", request.getLoginIdentifier());
@@ -102,11 +98,7 @@ public class UserServiceImpl implements UserService {
     public void changePassword(PasswordChangeRequest request) {
         log.info("Attempting to change password for user: {}", request.getLoginIdentifier());
 
-        User user = userRepository.findByEmailOrPesel(request.getLoginIdentifier(), request.getLoginIdentifier())
-                .orElseThrow(() -> {
-                    log.warn("Password change failed: User {} not found", request.getLoginIdentifier());
-                    return new InvalidCredentialsException();
-                });
+        User user = findByIdentifierOrThrow(request.getLoginIdentifier());
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             log.warn("Password change failed: Current password does not match for user {}", request.getLoginIdentifier());
@@ -130,11 +122,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUserById(UUID id) {
         log.info("Deactivating user with ID: {}", id);
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Deactivation failed: User {} not found", id);
-                    return new UserNotFoundException("User not found");
-                });
+        User user = findUserOrThrow(id);
 
         user.setActive(false);
         userRepository.save(user);
@@ -147,21 +135,34 @@ public class UserServiceImpl implements UserService {
     public UserResponse getUserById(UUID id) {
         log.info("Getting user with ID: {}", id);
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("User with ID {} not found", id);
-                    return new UserNotFoundException("User not found");
-                });
+        User user = findUserOrThrow(id);
 
         return userMapper.toResponse(user);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
         log.info("Getting all users");
 
         List<User> users = userRepository.findAllWithRoles();
 
         return userMapper.toResponse(users);
+    }
+
+    private User findUserOrThrow(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("User with ID {} not found", id);
+                    return new UserNotFoundException("User not found");
+                });
+    }
+
+    private User findByIdentifierOrThrow(String identifier) {
+        return userRepository.findByEmailOrPesel(identifier, identifier)
+                .orElseThrow(() -> {
+                    log.warn("User with identifier {} not found", identifier);
+                    return new InvalidCredentialsException();
+                });
     }
 }
