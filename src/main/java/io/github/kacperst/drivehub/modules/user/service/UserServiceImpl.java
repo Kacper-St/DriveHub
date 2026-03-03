@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,6 +47,11 @@ public class UserServiceImpl implements UserService {
                     log.warn("Authentication failed: User with identifier {} not found", request.getLoginIdentifier());
                     return new InvalidCredentialsException();
                 });
+
+        if (!user.isActive()) {
+            log.warn("Authentication failed for identifier {}", request.getLoginIdentifier());
+            throw new InvalidCredentialsException();
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             log.warn("Authentication failed: Invalid password for identifier {}", request.getLoginIdentifier());
@@ -134,5 +140,28 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         log.info("User {} has been successfully deactivated", id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getUserById(UUID id) {
+        log.info("Getting user with ID: {}", id);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("User with ID {} not found", id);
+                    return new UserNotFoundException("User not found");
+                });
+
+        return userMapper.toResponse(user);
+    }
+
+    @Override
+    public List<UserResponse> getAllUsers() {
+        log.info("Getting all users");
+
+        List<User> users = userRepository.findAllWithRoles();
+
+        return userMapper.toResponse(users);
     }
 }

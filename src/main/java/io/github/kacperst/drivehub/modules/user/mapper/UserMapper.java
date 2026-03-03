@@ -6,6 +6,9 @@ import io.github.kacperst.drivehub.modules.user.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.List;
+import java.util.Set;
+
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
@@ -16,7 +19,15 @@ public interface UserMapper {
     @Mapping(target = "updatedAt", ignore = true)
     User toEntity(UserRequest request);
 
-    @Mapping(target = "roles",
-            expression = "java(user.getRoles().stream().map(role -> role.getName().name()).collect(java.util.stream.Collectors.toSet()))")
+    @Mapping(target = "roles", expression = "java(mapRoles(user))")
     UserResponse toResponse(User user);
+
+    List<UserResponse> toResponse(List<User> users);
+
+    default Set<String> mapRoles(User user) {
+        if (user.getRoles() == null) return null;
+        return user.getRoles().stream()
+                .map(role -> role.getName().name())
+                .collect(java.util.stream.Collectors.toSet());
+    }
 }
