@@ -55,4 +55,11 @@ public class UserController {
         log.info("REST request to get all Users");
         return ResponseEntity.ok(userService.getAllUsers());
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UserResponse> updateUser(@PathVariable UUID id,
+                                                   @Valid @RequestBody UserRequest userRequest) {
+        log.info("REST request to update User: {}", id);
+        return ResponseEntity.ok(userService.updateUserById(id, userRequest));
+    }
 }

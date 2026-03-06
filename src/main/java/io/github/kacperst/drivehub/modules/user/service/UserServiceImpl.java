@@ -2,10 +2,7 @@ package io.github.kacperst.drivehub.modules.user.service;
 
 import io.github.kacperst.drivehub.common.exception.InternalTechnicalException;
 import io.github.kacperst.drivehub.common.util.PasswordGenerator;
-import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
-import io.github.kacperst.drivehub.modules.user.dto.PasswordChangeRequest;
-import io.github.kacperst.drivehub.modules.user.dto.UserRequest;
-import io.github.kacperst.drivehub.modules.user.dto.UserResponse;
+import io.github.kacperst.drivehub.modules.user.dto.*;
 import io.github.kacperst.drivehub.modules.user.exception.InvalidCredentialsException;
 import io.github.kacperst.drivehub.modules.user.exception.SamePasswordException;
 import io.github.kacperst.drivehub.modules.user.exception.UserAlreadyExistsException;
@@ -42,11 +39,7 @@ public class UserServiceImpl implements UserService {
     public void loginUser(LoginRequest request) {
         log.info("Attempting authentication for identifier: {}", request.getLoginIdentifier());
 
-        User user = userRepository.findByEmailOrPesel(request.getLoginIdentifier(), request.getLoginIdentifier())
-                .orElseThrow(() -> {
-                    log.warn("Authentication failed: User with identifier {} not found", request.getLoginIdentifier());
-                    return new InvalidCredentialsException();
-                });
+        User user = findByIdentifierOrThrow(request.getLoginIdentifier());
 
         if (!user.isActive()) {
             log.warn("Authentication failed for identifier {}", request.getLoginIdentifier());
@@ -102,11 +95,7 @@ public class UserServiceImpl implements UserService {
     public void changePassword(PasswordChangeRequest request) {
         log.info("Attempting to change password for user: {}", request.getLoginIdentifier());
 
-        User user = userRepository.findByEmailOrPesel(request.getLoginIdentifier(), request.getLoginIdentifier())
-                .orElseThrow(() -> {
-                    log.warn("Password change failed: User {} not found", request.getLoginIdentifier());
-                    return new InvalidCredentialsException();
-                });
+        User user = findByIdentifierOrThrow(request.getLoginIdentifier());
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
             log.warn("Password change failed: Current password does not match for user {}", request.getLoginIdentifier());
@@ -130,11 +119,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUserById(UUID id) {
         log.info("Deactivating user with ID: {}", id);
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("Deactivation failed: User {} not found", id);
-                    return new UserNotFoundException("User not found");
-                });
+        User user = findUserOrThrow(id);
 
         user.setActive(false);
         userRepository.save(user);
@@ -147,21 +132,71 @@ public class UserServiceImpl implements UserService {
     public UserResponse getUserById(UUID id) {
         log.info("Getting user with ID: {}", id);
 
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("User with ID {} not found", id);
-                    return new UserNotFoundException("User not found");
-                });
+        User user = findUserOrThrow(id);
 
         return userMapper.toResponse(user);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
         log.info("Getting all users");
 
         List<User> users = userRepository.findAllWithRoles();
 
         return userMapper.toResponse(users);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUserById(UUID id, UserRequest userRequest) {
+        log.info("Updating user with ID: {}", id);
+
+        User user = findUserOrThrow(id);
+
+        userRepository.findByEmail(userRequest.getEmail())
+                .ifPresent(existingUser -> {
+                    if (!existingUser.getId().equals(id)) {
+                        throw new UserAlreadyExistsException("Email already taken by another user");
+                    }
+                });
+
+        userRepository.findByPesel(userRequest.getPesel())
+                .ifPresent(existingUser -> {
+                    if (!existingUser.getId().equals(id)) {
+                        throw new UserAlreadyExistsException("PESEL already taken by another user");
+                    }
+                });
+
+        Set<Role> newRoles = userRequest.getRoles().stream()
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new InternalTechnicalException("Role " + roleName + " not found")))
+                .collect(Collectors.toSet());
+
+        user.getRoles().clear();
+        user.getRoles().addAll(newRoles);
+
+        userMapper.updateUser(userRequest, user);
+
+        User updatedUser = userRepository.save(user);
+        log.info("User {} successfully updated", id);
+
+        return userMapper.toResponse(updatedUser);
+    }
+
+    private User findUserOrThrow(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.warn("User with ID {} not found", id);
+                    return new UserNotFoundException("User not found");
+                });
+    }
+
+    private User findByIdentifierOrThrow(String identifier) {
+        return userRepository.findByEmailOrPesel(identifier, identifier)
+                .orElseThrow(() -> {
+                    log.warn("User with identifier {} not found", identifier);
+                    return new InvalidCredentialsException();
+                });
     }
 }
