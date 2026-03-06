@@ -5,6 +5,7 @@ import io.github.kacperst.drivehub.modules.user.dto.UserResponse;
 import io.github.kacperst.drivehub.modules.user.model.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.util.List;
 import java.util.Set;
@@ -23,6 +24,13 @@ public interface UserMapper {
     UserResponse toResponse(User user);
 
     List<UserResponse> toResponse(List<User> users);
+
+    @Mapping(target = "id",  ignore = true)
+    @Mapping(target = "forcePasswordChange",  ignore = true)
+    @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "authProvider", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    void updateUser(UserRequest userRequest, @MappingTarget User user);
 
     default Set<String> mapRoles(User user) {
         if (user.getRoles() == null) return null;

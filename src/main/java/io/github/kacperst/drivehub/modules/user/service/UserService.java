@@ -1,9 +1,6 @@
 package io.github.kacperst.drivehub.modules.user.service;
 
-import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
-import io.github.kacperst.drivehub.modules.user.dto.PasswordChangeRequest;
-import io.github.kacperst.drivehub.modules.user.dto.UserRequest;
-import io.github.kacperst.drivehub.modules.user.dto.UserResponse;
+import io.github.kacperst.drivehub.modules.user.dto.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -22,4 +19,6 @@ public interface UserService {
     UserResponse getUserById(UUID id);
 
     List<UserResponse> getAllUsers();
+
+    UserResponse updateUserById(UUID id, @Valid UserRequest userRequest);
 }

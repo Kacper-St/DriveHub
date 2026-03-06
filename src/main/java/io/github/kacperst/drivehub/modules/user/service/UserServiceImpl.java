@@ -2,10 +2,7 @@ package io.github.kacperst.drivehub.modules.user.service;
 
 import io.github.kacperst.drivehub.common.exception.InternalTechnicalException;
 import io.github.kacperst.drivehub.common.util.PasswordGenerator;
-import io.github.kacperst.drivehub.modules.user.dto.LoginRequest;
-import io.github.kacperst.drivehub.modules.user.dto.PasswordChangeRequest;
-import io.github.kacperst.drivehub.modules.user.dto.UserRequest;
-import io.github.kacperst.drivehub.modules.user.dto.UserResponse;
+import io.github.kacperst.drivehub.modules.user.dto.*;
 import io.github.kacperst.drivehub.modules.user.exception.InvalidCredentialsException;
 import io.github.kacperst.drivehub.modules.user.exception.SamePasswordException;
 import io.github.kacperst.drivehub.modules.user.exception.UserAlreadyExistsException;
@@ -148,6 +145,43 @@ public class UserServiceImpl implements UserService {
         List<User> users = userRepository.findAllWithRoles();
 
         return userMapper.toResponse(users);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUserById(UUID id, UserRequest userRequest) {
+        log.info("Updating user with ID: {}", id);
+
+        User user = findUserOrThrow(id);
+
+        userRepository.findByEmail(userRequest.getEmail())
+                .ifPresent(existingUser -> {
+                    if (!existingUser.getId().equals(id)) {
+                        throw new UserAlreadyExistsException("Email already taken by another user");
+                    }
+                });
+
+        userRepository.findByPesel(userRequest.getPesel())
+                .ifPresent(existingUser -> {
+                    if (!existingUser.getId().equals(id)) {
+                        throw new UserAlreadyExistsException("PESEL already taken by another user");
+                    }
+                });
+
+        Set<Role> newRoles = userRequest.getRoles().stream()
+                .map(roleName -> roleRepository.findByName(roleName)
+                        .orElseThrow(() -> new InternalTechnicalException("Role " + roleName + " not found")))
+                .collect(Collectors.toSet());
+
+        user.getRoles().clear();
+        user.getRoles().addAll(newRoles);
+
+        userMapper.updateUser(userRequest, user);
+
+        User updatedUser = userRepository.save(user);
+        log.info("User {} successfully updated", id);
+
+        return userMapper.toResponse(updatedUser);
     }
 
     private User findUserOrThrow(UUID id) {
